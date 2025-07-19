@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome! | CV Digital Ardan</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --dock-height: 60px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: url('https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?q=80&w=2574&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+            color: white;
+            cursor: default;
+        }
+
+        /* --- Top Bar (Menu Bar) --- */
+        #top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .top-bar-left, .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .apple-logo {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* --- Styling Jendela --- */
+        .window {
+            position: absolute;
+            min-width: 320px;
+            max-width: 90vw;
+            height: 60vh;
+            background-color: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(25px);
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            resize: both;
+            overflow: hidden;
+        }
+        .window.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* --- PERBAIKAN ANIMASI MINIMIZE --- */
+        .window.minimizing {
+            /* Menggunakan kurva bezier yang lebih agresif untuk simulasi "terserap" */
+            transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+            pointer-events: none;
+        }
+        .window.minimized {
+            visibility: hidden;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        /* --- Title Bar --- */
+        .title-bar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            cursor: grab;
+        }
+        .title-bar:active { cursor: grabbing; }
+
+        .traffic-lights { display: flex; gap: 0.5rem; }
+        .traffic-lights .light {
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+        .light.red { background-color: #ff5f56; }
+        .light.yellow { background-color: #ffbd2e; }
+        .light.green { background-color: #27c93f; }
+        
+        .title-text {
+            color: #e0e0e0;
+            font-size: 0.875rem;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- Konten Jendela --- */
+        .window-content {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .window-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #fff;
+        }
+
+        /* --- Dock --- */
+        #dock {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: var(--dock-height);
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: flex-end;
+            padding: 5px 10px;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .dock-item {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+        .dock-item .active-dot {
+            position: absolute;
+            bottom: 2px;
+            width: 4px;
+            height: 4px;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .dock-item.active .active-dot {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div id="top-bar">
+        <div class="top-bar-left">
+            <svg class="apple-logo" xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24"><path d="M14.33,2.44a4.44,4.44,0,0,0-3.5,2,4.28,4.28,0,0,0-3.41-2A4.1,4.1,0,0,0,3,6.54c0,3.62,2.5,6.43,5.43,6.43,1.2,0,2.29-.5,3-1.44.75,1,1.88,1.44,3.07,1.44,2.93,0,5.43-2.81,5.43-6.43A4.2,4.2,0,0,0,14.33,2.44Zm-3.41,15a4.4,4.4,0,0,0,3.51,2.07,4.28,4.28,0,0,0,3.41-2.07,10.29,10.29,0,0,1-3.41.55A10.29,10.29,0,0,1,10.92,17.41Z"/></svg>
+            <span class="font-bold">Visual Studio Code</span>
+        </div>
+        <div class="top-bar-right">
+            <span id="clock"></span>
+        </div>
+    </div>
+
+    <!-- Jendela CV Utama -->
+    <div id="main-cv-window" class="window w-full max-w-lg" style="height: auto; resize: none;">
+        <div class="title-bar">
+            <div class="traffic-lights">
+                <div class="light red" data-action="close"></div>
+                <div class="light yellow" data-action="minimize"></div>
+                <div class="light green"></div>
+            </div>
+            <p class="title-text">Profil Saya</p>
+        </div>
+        <div class="window-content text-center">
+            <img src="/home/ireng/Downloads/PXL_20250421_082314905.MP(2).jpg" alt="Ardan Ganteng" class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 border-2 border-white/20 shadow-lg">
+            <h1 class="text-3xl md:text-4xl font-bold">Ardan Fachrial Ramdani</h1>
+            <p class="text-lg text-indigo-300 mt-1">Ketua IT | OSIS</p>
+            <p class="mt-6 text-gray-300 max-w-md mx-auto text-sm md:text-base">
+                Saya adalah seorang siswa yang aktif di bidang teknologi informasi, khususnya dalam pengembangan web dan aplikasi. Saya memiliki pengalaman dalam berbagai bahasa pemrograman dan platform, serta berkomitmen untuk terus belajar dan berkembang dalam industri ini.
+            </p>
+        </div>
+    </div>
+
+    <!-- Dock -->
+    <div id="dock">
+        <button id="dock-item-cv" class="dock-item" title="Profil Saya">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+            <div class="active-dot"></div>
+        </button>
+        <button id="dock-item-portfolio" class="dock-item" title="Portofolio" data-url="https://ardan-su.github.io/CVDigi/" data-title="Portofolio">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
+            <div class="active-dot"></div>
+        </button>
+        <button id="dock-item-github" class="dock-item" title="GitHub" data-url="https://github.com/ardan-su" data-title="GitHub">
+            <svg class="w-7 h-7" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            <div class="active-dot"></div>
+        </button>
+        <button id="dock-item-youtube" class="dock-item" title="YouTube" data-url="https://www.youtube.com/@usernamedrim7081" data-title="YouTube">
+            <svg class="w-7 h-7" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            <div class="active-dot"></div>
+        </button>
+    </div>
+
+    <!-- Template untuk jendela baru -->
+    <template id="window-template">
+        <div class="window">
+            <div class="title-bar">
+                <div class="traffic-lights">
+                    <div class="light red" data-action="close"></div>
+                    <div class="light yellow" data-action="minimize"></div>
+                    <div class="light green" data-action="maximize"></div>
+                </div>
+                <p class="title-text"></p>
+            </div>
+            <div class="window-content">
+                <iframe></iframe>
+            </div>
+        </div>
+    </template>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let zIndexCounter = 10;
+        const openWindows = new Map();
+
+        const clockElement = document.getElementById('clock');
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false };
+            clockElement.textContent = now.toLocaleTimeString('id-ID', options).replace(/\./g, ':');
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        const dock = document.getElementById('dock');
+        const dockItems = Array.from(dock.children);
+        const MAX_SCALE = 1.8;
+        const AFFECT_DISTANCE = 80;
+
+        dock.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            dockItems.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const itemCenterX = itemRect.left + itemRect.width / 2;
+                const distance = Math.abs(mouseX - itemCenterX);
+                let scale = 1;
+                if (distance < AFFECT_DISTANCE) {
+                    scale = 1 + (MAX_SCALE - 1) * (1 - distance / AFFECT_DISTANCE);
+                }
+                item.style.transform = `scale(${scale}) translateY(${(scale - 1) * -10}px)`;
+            });
+        });
+
+        dock.addEventListener('mouseleave', () => {
+            dockItems.forEach(item => {
+                item.style.transform = 'scale(1) translateY(0)';
+            });
+        });
+
+        function makeDraggable(windowEl) {
+            const titleBar = windowEl.querySelector('.title-bar');
+            let isDragging = false, offsetX, offsetY;
+
+            const startDrag = (e) => {
+                isDragging = true;
+                bringToFront(windowEl);
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                offsetX = clientX - windowEl.offsetLeft;
+                offsetY = clientY - windowEl.offsetTop;
+                titleBar.style.cursor = 'grabbing';
+                document.body.style.userSelect = 'none';
+            };
+
+            const drag = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                windowEl.style.left = `${clientX - offsetX}px`;
+                windowEl.style.top = `${clientY - offsetY}px`;
+            };
+
+            const stopDrag = () => {
+                isDragging = false;
+                titleBar.style.cursor = 'grab';
+                document.body.style.userSelect = '';
+            };
+
+            titleBar.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            titleBar.addEventListener('touchstart', startDrag, { passive: true });
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function bringToFront(windowEl) {
+            windowEl.style.zIndex = ++zIndexCounter;
+        }
+
+        function handleWindowAction(e) {
+            const action = e.target.dataset.action;
+            if (!action) return;
+            const windowEl = e.target.closest('.window');
+            const windowId = windowEl.id;
+
+            if (action === 'close') {
+                if (windowId === 'main-cv-window') {
+                    minimizeWindow(windowId);
+                } else {
+                    closeWindow(windowId);
+                }
+            } else if (action === 'minimize') {
+                minimizeWindow(windowId);
+            }
+        }
+        
+        function closeWindow(windowId) {
+            const windowData = openWindows.get(windowId);
+            if (!windowData) return;
+            windowData.element.style.transform = 'scale(0.8)';
+            windowData.element.style.opacity = '0';
+            setTimeout(() => {
+                windowData.element.remove();
+                document.getElementById(windowData.dockId)?.classList.remove('active');
+                openWindows.delete(windowId);
+            }, 300);
+        }
+
+        function minimizeWindow(windowId) {
+            const windowData = openWindows.get(windowId);
+            if (!windowData || windowData.minimized) return;
+
+            const windowEl = windowData.element;
+            const dockItem = document.getElementById(windowData.dockId);
+            if (!dockItem) return;
+
+            const dockRect = dockItem.getBoundingClientRect();
+            const windowRect = windowEl.getBoundingClientRect();
+            
+            windowData.lastPosition = { top: windowEl.style.top, left: windowEl.style.left };
+
+            // --- PERBAIKAN LOGIKA ANIMASI ---
+            // Mengatur titik asal transformasi ke tengah bawah jendela
+            windowEl.style.transformOrigin = '50% 100%'; 
+            windowEl.classList.add('minimizing');
+
+            const translateX = (dockRect.left + dockRect.width / 2) - (windowRect.left + windowRect.width / 2);
+            const translateY = (dockRect.top + dockRect.height / 2) - (windowRect.top + windowRect.height / 2);
+            
+            // Mengubah jendela menjadi sangat kecil (scale(0)) dan memindahkannya ke posisi dock
+            windowEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(0)`;
+            windowEl.style.opacity = '0';
+            
+            windowData.minimized = true;
+
+            setTimeout(() => {
+                windowEl.classList.add('minimized');
+            }, 500); // Sesuaikan dengan durasi transisi di CSS
+        }
+
+        function restoreWindow(windowId) {
+            const windowData = openWindows.get(windowId);
+            if (!windowData) return;
+            
+            if (!windowData.minimized) {
+                bringToFront(windowData.element);
+                return;
+            }
+
+            const windowEl = windowData.element;
+            windowEl.classList.remove('minimized');
+            
+            requestAnimationFrame(() => {
+                windowEl.classList.remove('minimizing');
+                // Mengembalikan transform dan opacity ke state semula
+                windowEl.style.transform = 'scale(1)';
+                windowEl.style.opacity = '1';
+                windowEl.style.transformOrigin = '';
+                if(windowData.lastPosition) {
+                    windowEl.style.top = windowData.lastPosition.top;
+                    windowEl.style.left = windowData.lastPosition.left;
+                }
+            });
+
+            bringToFront(windowEl);
+            windowData.minimized = false;
+        }
+
+        function createWindow(id, title, url, dockId) {
+            if (openWindows.has(id)) {
+                restoreWindow(id);
+                return;
+            }
+
+            const template = document.getElementById('window-template');
+            const newWindowEl = template.content.cloneNode(true).firstElementChild;
+            
+            newWindowEl.id = id;
+            newWindowEl.querySelector('.title-text').textContent = title;
+            newWindowEl.querySelector('iframe').src = url;
+
+            document.body.appendChild(newWindowEl);
+            
+            newWindowEl.style.top = `${Math.random() * 10 + 10}%`;
+            newWindowEl.style.left = `${Math.random() * 20 + 20}%`;
+
+            makeDraggable(newWindowEl);
+            bringToFront(newWindowEl);
+            newWindowEl.addEventListener('mousedown', () => bringToFront(newWindowEl), true);
+            newWindowEl.addEventListener('click', handleWindowAction);
+
+            openWindows.set(id, { element: newWindowEl, title, minimized: false, dockId });
+            
+            document.getElementById(dockId)?.classList.add('active');
+
+            setTimeout(() => newWindowEl.classList.add('visible'), 50);
+        }
+
+        const mainWindow = document.getElementById('main-cv-window');
+        const mainId = mainWindow.id;
+        const mainDockId = 'dock-item-cv';
+        openWindows.set(mainId, { element: mainWindow, title: 'Profil Saya', minimized: false, dockId: mainDockId });
+        
+        mainWindow.style.left = `calc(50% - ${mainWindow.offsetWidth / 2}px)`;
+        mainWindow.style.top = `calc(50% - ${mainWindow.offsetHeight / 2}px)`;
+        
+        makeDraggable(mainWindow);
+        bringToFront(mainWindow);
+        mainWindow.addEventListener('mousedown', () => bringToFront(mainWindow), true);
+        mainWindow.addEventListener('click', handleWindowAction);
+        document.getElementById(mainDockId).classList.add('active');
+        setTimeout(() => mainWindow.classList.add('visible'), 100);
+
+        document.getElementById('dock-item-cv').addEventListener('click', () => {
+            restoreWindow('main-cv-window');
+        });
+
+        document.querySelectorAll('#dock button[data-url]').forEach(button => {
+            button.addEventListener('click', () => {
+                const url = button.dataset.url;
+                const title = button.dataset.title;
+                const windowId = 'window-' + title.replace(/\s/g, '');
+                const dockId = button.id;
+                createWindow(windowId, title, url, dockId);
+            });
+        });
+    });
+    </script>
+</body>
+</html>
